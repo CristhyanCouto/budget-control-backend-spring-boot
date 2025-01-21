@@ -1,6 +1,6 @@
 package com.budget.control.backend.controller;
 
-import com.budget.control.backend.controller.dto.TransactionExpenseDTO;
+import com.budget.control.backend.controller.dto.request.TransactionExpenseRequestDTO;
 import com.budget.control.backend.model.TransactionExpenseModel;
 import com.budget.control.backend.service.TransactionExpenseService;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +26,9 @@ public class TransactionExpenseController {
 
     //Saving an expense transaction in the database
     @PostMapping
-    public ResponseEntity<Void> saveExpenseTransaction(@RequestBody TransactionExpenseDTO transactionExpenseDTO) {
+    public ResponseEntity<Void> saveExpenseTransaction(@RequestBody TransactionExpenseRequestDTO transactionExpenseRequestDTO) {
         //Map the DTO to the entity
-        TransactionExpenseModel transactionExpenseEntity = transactionExpenseDTO.mapToTransactionExpenseModel();
+        TransactionExpenseModel transactionExpenseEntity = transactionExpenseRequestDTO.mapToTransactionExpenseModel();
         //Save the expense transaction
         transactionExpenseService.saveTransactionExpense(transactionExpenseEntity);
 

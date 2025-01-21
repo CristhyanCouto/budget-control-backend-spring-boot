@@ -1,4 +1,4 @@
-package com.budget.control.backend.controller.dto;
+package com.budget.control.backend.controller.dto.request;
 
 import com.budget.control.backend.model.TransactionExpenseModel;
 import com.budget.control.backend.type.TransactionExpenseType;
@@ -6,7 +6,7 @@ import com.budget.control.backend.type.TransactionExpenseType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record TransactionExpenseDTO(
+public record TransactionExpenseRequestDTO(
         TransactionExpenseType name,
         String description,
         BigDecimal amount,

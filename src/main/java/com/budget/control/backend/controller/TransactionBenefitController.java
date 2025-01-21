@@ -1,6 +1,6 @@
 package com.budget.control.backend.controller;
 
-import com.budget.control.backend.controller.dto.TransactionBenefitDTO;
+import com.budget.control.backend.controller.dto.request.TransactionBenefitRequestDTO;
 import com.budget.control.backend.model.TransactionBenefitModel;
 import com.budget.control.backend.service.TransactionBenefitService;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +26,9 @@ public class TransactionBenefitController {
 
     //Saving a benefit transaction in the database
     @PostMapping
-    public ResponseEntity<Void> saveBenefitTransaction(@RequestBody TransactionBenefitDTO transactionBenefitDTO) {
+    public ResponseEntity<Void> saveBenefitTransaction(@RequestBody TransactionBenefitRequestDTO transactionBenefitRequestDTO) {
         //Map the DTO to the entity
-        TransactionBenefitModel transactionBenefitEntity = transactionBenefitDTO.mapToTransactionBenefitModel();
+        TransactionBenefitModel transactionBenefitEntity = transactionBenefitRequestDTO.mapToTransactionBenefitModel();
         //Save the benefit transaction
         transactionBenefitService.saveTransactionBenefit(transactionBenefitEntity);
 

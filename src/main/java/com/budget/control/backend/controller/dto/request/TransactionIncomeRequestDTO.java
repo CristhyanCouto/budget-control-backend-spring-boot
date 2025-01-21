@@ -1,4 +1,4 @@
-package com.budget.control.backend.controller.dto;
+package com.budget.control.backend.controller.dto.request;
 
 import com.budget.control.backend.model.TransactionIncomeModel;
 import com.budget.control.backend.type.TransactionIncomeType;
@@ -6,7 +6,7 @@ import com.budget.control.backend.type.TransactionIncomeType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record TransactionIncomeDTO(
+public record TransactionIncomeRequestDTO(
         TransactionIncomeType name,
         String description,
         BigDecimal amount,

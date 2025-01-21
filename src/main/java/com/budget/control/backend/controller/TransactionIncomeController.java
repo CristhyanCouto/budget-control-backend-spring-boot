@@ -1,6 +1,9 @@
 package com.budget.control.backend.controller;
 
-import com.budget.control.backend.controller.dto.TransactionIncomeDTO;
+import com.budget.control.backend.controller.dto.error.ErrorResponse;
+import com.budget.control.backend.controller.dto.request.TransactionIncomeRequestDTO;
+import com.budget.control.backend.exception.DuplicatedRegisterException;
+import com.budget.control.backend.exception.NullFieldException;
 import com.budget.control.backend.model.TransactionIncomeModel;
 import com.budget.control.backend.service.TransactionIncomeService;
 import org.springframework.http.ResponseEntity;
@@ -22,18 +25,27 @@ public class TransactionIncomeController {
 
     //Saving an income transaction in the database
     @PostMapping
-    public ResponseEntity<Void> saveIncomeTransaction(@RequestBody TransactionIncomeDTO transactionIncomeDTO) {
-        //Map the DTO to the entity
-        TransactionIncomeModel transactionIncomeEntity = transactionIncomeDTO.mapToTransactionIncomeModel();
-        //Save the income transaction
-        transactionIncomeService.saveTransactionIncome(transactionIncomeEntity);
+    public ResponseEntity<Object> saveIncomeTransaction(@RequestBody TransactionIncomeRequestDTO transactionIncomeRequestDTO) {
+        try {
+            //Map the DTO to the entity
+            TransactionIncomeModel transactionIncomeEntity = transactionIncomeRequestDTO.mapToTransactionIncomeModel();
+            //Save the income transaction
+            transactionIncomeService.saveTransactionIncome(transactionIncomeEntity);
 
-        //Return a response with the status code 201 and the URL location of the new resource in the header
-        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(transactionIncomeEntity.getId())
-                .toUri();
-        return ResponseEntity.created(location).build();
+            //Return a response with the status code 201 and the URL location of the new resource in the header
+            URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                    .path("/{id}")
+                    .buildAndExpand(transactionIncomeEntity.getId())
+                    .toUri();
+            return ResponseEntity.created(location).build();
+
+        }catch (DuplicatedRegisterException e) {
+            var errorDTO = ErrorResponse.conflictResponse(e.getMessage());
+            return ResponseEntity.status(errorDTO.status()).body(errorDTO);
+        }catch (NullFieldException e) {
+            var errorDTO = ErrorResponse.nullFieldResponse(e.getMessage());
+            return ResponseEntity.status(errorDTO.status()).body(errorDTO);
+        }
     }
 
     @GetMapping

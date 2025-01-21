@@ -1,4 +1,4 @@
-package com.budget.control.backend.controller.dto;
+package com.budget.control.backend.controller.dto.request;
 
 import com.budget.control.backend.model.TransactionBenefitModel;
 import com.budget.control.backend.type.TransactionBenefitType;
@@ -6,7 +6,7 @@ import com.budget.control.backend.type.TransactionBenefitType;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record TransactionBenefitDTO(
+public record TransactionBenefitRequestDTO(
         TransactionBenefitType name,
         String description,
         BigDecimal amount,
