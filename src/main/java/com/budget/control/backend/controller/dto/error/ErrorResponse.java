@@ -17,4 +17,8 @@ public record ErrorResponse(int status, String message, List<ErrorField> errors)
     public static ErrorResponse nullFieldResponse(String message){
         return new ErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY.value(), message, List.of());
     }
+
+    public static ErrorResponse invalidUUIDResponse(String message) {
+        return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message, List.of());
+    }
 }

@@ -1,4 +1,4 @@
-package com.budget.control.backend.validator;
+package com.budget.control.backend.validator.request;
 
 import com.budget.control.backend.exception.DuplicatedRegisterException;
 import com.budget.control.backend.exception.NullFieldException;
@@ -9,11 +9,11 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-public class TransactionIncomeValidator {
+public class TransactionIncomeValidatorRequest {
 
     private final TransactionIncomeRepository transactionIncomeRepository;
 
-    public TransactionIncomeValidator(TransactionIncomeRepository transactionIncomeRepository) {
+    public TransactionIncomeValidatorRequest(TransactionIncomeRepository transactionIncomeRepository) {
         this.transactionIncomeRepository = transactionIncomeRepository;
     }
 

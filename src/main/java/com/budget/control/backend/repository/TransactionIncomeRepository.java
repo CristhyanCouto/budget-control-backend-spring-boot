@@ -10,5 +10,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface TransactionIncomeRepository extends JpaRepository<TransactionIncomeModel, UUID> {
+    //Find transaction income by name and description and amount and date
     Optional<TransactionIncomeModel> findByNameAndDescriptionAndAmountAndDate(TransactionIncomeType name, String description, BigDecimal amount, LocalDate date);
+
+
 }

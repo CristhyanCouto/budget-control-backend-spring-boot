@@ -2,15 +2,20 @@ package com.budget.control.backend.controller;
 
 import com.budget.control.backend.controller.dto.error.ErrorResponse;
 import com.budget.control.backend.controller.dto.request.TransactionIncomeRequestDTO;
+import com.budget.control.backend.controller.dto.response.TransactionIncomeResponseDTO;
 import com.budget.control.backend.exception.DuplicatedRegisterException;
+import com.budget.control.backend.exception.InvalidUUIDException;
 import com.budget.control.backend.exception.NullFieldException;
 import com.budget.control.backend.model.TransactionIncomeModel;
 import com.budget.control.backend.service.TransactionIncomeService;
+import com.budget.control.backend.validator.UUIDValidator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/transaction-income")
@@ -18,9 +23,12 @@ public class TransactionIncomeController {
 
     //Dependency Injection
     private final TransactionIncomeService transactionIncomeService;
+    private UUIDValidator uuidValidator = new UUIDValidator();
 
-    public TransactionIncomeController(TransactionIncomeService transactionIncomeService) {
+    public TransactionIncomeController(TransactionIncomeService transactionIncomeService,
+                                       UUIDValidator uuidValidator) {
         this.transactionIncomeService = transactionIncomeService;
+        this.uuidValidator = uuidValidator;
     }
 
     //Saving an income transaction in the database
@@ -48,8 +56,32 @@ public class TransactionIncomeController {
         }
     }
 
-    @GetMapping
-    public String getIncomeTransaction() {
-        return "GET Income Transaction";
+    //Getting an income transaction by id
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> getIncomeTransactionById(@PathVariable("id") String id) {
+        try {
+            uuidValidator.validateUUID(id);
+
+            var transactionIncomeID = UUID.fromString(id);
+            Optional<TransactionIncomeModel> transactionIncomeModelOptional = transactionIncomeService.getTransactionIncomeById(transactionIncomeID);
+            if (transactionIncomeModelOptional.isPresent()) {
+                TransactionIncomeModel transactionIncomeEntity = transactionIncomeModelOptional.get();
+                TransactionIncomeResponseDTO transactionIncomeResponseDTO = new TransactionIncomeResponseDTO(
+                        transactionIncomeEntity.getId(),
+                        transactionIncomeEntity.getName(),
+                        transactionIncomeEntity.getDescription(),
+                        transactionIncomeEntity.getAmount(),
+                        transactionIncomeEntity.getDate(),
+                        transactionIncomeEntity.getCreatedAt(),
+                        transactionIncomeEntity.getUpdatedAt(),
+                        transactionIncomeEntity.getUserId()
+                );
+                return ResponseEntity.ok(transactionIncomeResponseDTO);
+            }
+            return ResponseEntity.notFound().build();
+        }catch (InvalidUUIDException e) {
+            var errorDTO = ErrorResponse.invalidUUIDResponse(e.getMessage());
+            return ResponseEntity.status(errorDTO.status()).body(errorDTO);
+        }
     }
 }
