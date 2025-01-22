@@ -141,7 +141,12 @@ public class TransactionIncomeController {
                             transactionIncome.getUserId()))
                     .toList();
 
+            if (response.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
             return ResponseEntity.ok(response);
+
 
         } catch (InvalidFieldException e) {
             var errorDTO = ErrorResponse.invalidFieldResponse(e.getMessage());
