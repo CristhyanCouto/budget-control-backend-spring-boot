@@ -4,7 +4,6 @@ import com.budget.control.backend.exception.InvalidFieldException;
 import com.budget.control.backend.type.TransactionIncomeType;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.util.EnumSet;
 
 @Component
