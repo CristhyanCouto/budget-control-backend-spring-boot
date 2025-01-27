@@ -106,7 +106,9 @@ public class TransactionIncomeController {
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "amount", required = false) BigDecimal amount,
-            @RequestParam(value = "date", required = false) LocalDate date
+            @RequestParam(value = "date", required = false) LocalDate date,
+            @RequestParam(value = "startDate", required = false) LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) LocalDate endDate
     ) {
         try {
             TransactionIncomeType transactionIncomeType = null;
@@ -126,9 +128,14 @@ public class TransactionIncomeController {
                 transactionIncomeValidatorResponse.validate(transactionIncomeType); // Validates ENUM if it's provided
             }
 
+            // Validate date range
+            if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+                throw new InvalidFieldException("Start date cannot be after end date.");
+            }
+
             // Call the service to find the transactions with the provided params
             List<TransactionIncomeModel> result = transactionIncomeService
-                    .getTransactionIncomeByNameOrDescriptionOrAmountOrDate(transactionIncomeType, description, amount, date);
+                    .getTransactionIncomeByNameOrDescriptionOrAmountOrDate(transactionIncomeType, description, amount, date, startDate, endDate);
 
             // Map the found fields to a List of DTO to return a response of fields
             List<TransactionIncomeResponseDTO> response = result.stream()

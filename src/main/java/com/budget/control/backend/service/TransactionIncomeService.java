@@ -49,7 +49,7 @@ public class TransactionIncomeService {
 
     //Dynamic query to get income transaction by filters
     public List<TransactionIncomeModel> getTransactionIncomeByNameOrDescriptionOrAmountOrDate(
-            TransactionIncomeType name, String description, BigDecimal amount, LocalDate date){
+            TransactionIncomeType name, String description, BigDecimal amount, LocalDate date, LocalDate startDate, LocalDate endDate){
 
         //Dynamic query specification
         Specification<TransactionIncomeModel> specification = (root, query, criteriaBuilder) -> {
@@ -67,9 +67,16 @@ public class TransactionIncomeService {
             if(amount != null){
                 predicates.add(criteriaBuilder.equal(root.get("amount"), amount));
             }
-            //Filter by date
-            if(date != null) {
+            // Filter by exact date if no start or end date is provided
+            if (date != null && startDate == null && endDate == null) {
                 predicates.add(criteriaBuilder.equal(root.get("date"), date));
+            }
+            // Filter by date range if start or end date is provided
+            if (startDate != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("date"), startDate));
+            }
+            if (endDate != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("date"), endDate));
             }
             //Combine predicates using And Logic
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
