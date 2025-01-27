@@ -87,5 +87,14 @@ public class TransactionIncomeService {
 
     }
 
+    // Update transaction income
+    public void updateTransactionIncome(TransactionIncomeModel transactionIncomeModel){
+        if (transactionIncomeModel.getId() == null) {
+            throw new IllegalArgumentException("Transaction ID cannot be null");
+        }
+        transactionIncomeValidatorRequest.validate(transactionIncomeModel);
+        transactionIncomeRepository.save(transactionIncomeModel);
+    }
+
 
 }

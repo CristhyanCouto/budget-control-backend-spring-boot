@@ -20,6 +20,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -172,6 +173,84 @@ public class TransactionIncomeController {
         catch (Exception e) {
             e.printStackTrace();  // Shows the error in the console
             var errorDTO = ErrorResponse.invalidFieldResponse("An unexpected error occurred.");
+            return ResponseEntity.status(errorDTO.status()).body(errorDTO);
+        }
+    }
+
+    //Update transaction income by id
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> updateTransactionIncomeById(
+            @PathVariable("id") String id,
+            @RequestBody TransactionIncomeRequestDTO transactionIncomeRequestDTO){
+        try{
+            UUID transactionIncomeId = UUID.fromString(id);
+
+            // Retrieve existing transaction
+            Optional<TransactionIncomeModel> transactionIncomeModelOptional =
+                    transactionIncomeService.getTransactionIncomeById(transactionIncomeId);
+
+            if (transactionIncomeModelOptional.isPresent()){
+
+                TransactionIncomeModel existingTransaction = transactionIncomeModelOptional.get();
+
+                //Update only fields provided in the request body
+                if (transactionIncomeRequestDTO.name() != null) {
+                        TransactionIncomeType transactionIncomeType = null;
+
+                        String name = String.valueOf(transactionIncomeRequestDTO.name());
+
+                        // Verify if the param 'name' has been provided and if is valid
+                        if (name != null && !name.isEmpty()) {
+                            try {
+                                //Try to convert the value 'name' to enum, if not possible, throw an error.
+                                transactionIncomeType = TransactionIncomeType.valueOf(name.trim());
+                            } catch (IllegalArgumentException e) {
+                                throw new InvalidFieldException("Invalid value provided for TransactionIncomeType: " + name);
+                            }
+                        }
+
+                        // If 'transactionIncomeType' has been defined, validates it
+                        if (transactionIncomeType != null) {
+                            transactionIncomeValidatorResponse.validate(transactionIncomeType); // Validates ENUM if it's provided
+                        }
+
+                        existingTransaction.setName(transactionIncomeRequestDTO.name());
+
+                }
+                if (transactionIncomeRequestDTO.description() != null) {
+                    existingTransaction.setDescription(transactionIncomeRequestDTO.description());
+                }
+                if (transactionIncomeRequestDTO.amount() != null) {
+                    existingTransaction.setAmount(transactionIncomeRequestDTO.amount());
+                }
+                if (transactionIncomeRequestDTO.date() != null) {
+                    try {
+                        // Validate date format explicitly
+                        LocalDate parsedDate = LocalDate.parse(transactionIncomeRequestDTO.date().toString());
+                        existingTransaction.setDate(parsedDate);
+                    } catch (DateTimeParseException e) {
+                        return ResponseEntity.badRequest().body("Invalid date format. Expected format is YYYY-MM-DD.");
+                    }
+                }
+
+                // Call service to update
+                transactionIncomeService.updateTransactionIncome(existingTransaction);
+                return ResponseEntity.noContent().build();
+            }
+            // Return 404 if the transaction is not found
+            return ResponseEntity.notFound().build();
+        } //Invalid name field catch Exception
+        catch (InvalidFieldException e) {
+            var errorDTO = ErrorResponse.invalidFieldResponse(e.getMessage());
+            return ResponseEntity.status(errorDTO.status()).body(errorDTO);
+        }
+        catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Invalid UUID: " + id);
+        } catch (DuplicatedRegisterException e) {
+            var errorDTO = ErrorResponse.conflictResponse(e.getMessage());
+            return ResponseEntity.status(errorDTO.status()).body(errorDTO);
+        } catch (Exception e) {
+            var errorDTO = ErrorResponse.unexpectedErrorResponse("An unexpected error occurred.");
             return ResponseEntity.status(errorDTO.status()).body(errorDTO);
         }
     }

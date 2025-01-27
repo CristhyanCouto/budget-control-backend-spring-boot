@@ -29,4 +29,8 @@ public record ErrorResponse(int status, String message, List<ErrorField> errors)
     public static ErrorResponse invalidFieldResponse(String message) {
         return new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message, List.of());
     }
+
+    public static ErrorResponse unexpectedErrorResponse(String message) {
+        return  new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), message, List.of());
+    }
 }

@@ -8,16 +8,24 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // Date Format Exception Handler Name Handler Exception
     @ExceptionHandler(HttpMessageConversionException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageConversionException(HttpMessageConversionException e) {
-        String errorMessage = "Invalid value provided for TransactionIncomeType. Please provide a valid enum value.";
-        ErrorResponse errorResponse = new ErrorResponse(errorMessage, HttpStatus.BAD_REQUEST.value());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    public ResponseEntity<Object> handleHttpMessageConversionException(HttpMessageConversionException e) {
+        Throwable cause = e.getCause();
+        while (cause != null) {
+            if (cause instanceof DateTimeException) {
+                return ResponseEntity.badRequest().body("Invalid date format. Expected format is YYYY-MM-DD.");
+            }
+            cause = cause.getCause();
+        }
+        String errorMessage = "Invalid transaction name.";
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
     }
 
     @ExceptionHandler(InvalidFieldException.class)
@@ -32,7 +40,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
-    //Date Format Exception Handler
+    // Generic Method Argument Type Mismatch Handler
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Object> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
         if (ex.getRequiredType() != null && ex.getRequiredType().equals(LocalDate.class)) {
