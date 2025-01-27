@@ -41,7 +41,7 @@ public class TransactionIncomeValidatorRequest {
     }
 
     //Check if the transaction non-null fields is null
-    private boolean isTransactionIncomeNull(TransactionIncomeModel transactionIncomeModel) {
+    private void isTransactionIncomeNull(TransactionIncomeModel transactionIncomeModel) {
         if(transactionIncomeModel.getName() == null) {
             throw new NullFieldException("Transaction income name cannot be null");
         }
@@ -51,6 +51,5 @@ public class TransactionIncomeValidatorRequest {
         if(transactionIncomeModel.getDate() == null) {
             throw new NullFieldException("Transaction income date cannot be null");
         }
-        return false;
     }
 }
