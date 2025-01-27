@@ -31,7 +31,7 @@ public class TransactionIncomeController {
     //Dependency Injection
     private final TransactionIncomeService transactionIncomeService;
     private final TransactionIncomeValidatorResponse transactionIncomeValidatorResponse = new TransactionIncomeValidatorResponse();
-    private UUIDValidator uuidValidator = new UUIDValidator();
+    private final UUIDValidator uuidValidator;
 
     //Constructor Injection
     public TransactionIncomeController(TransactionIncomeService transactionIncomeService,
