@@ -6,14 +6,17 @@ import com.budget.control.backend.type.TransactionIncomeType;
 import com.budget.control.backend.validator.UUIDValidator;
 import com.budget.control.backend.validator.request.TransactionIncomeValidatorRequest;
 import com.budget.control.backend.validator.response.TransactionIncomeValidatorResponse;
-import org.springframework.data.domain.Sort;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 
 @Service
 public class TransactionIncomeService {
@@ -48,10 +51,44 @@ public class TransactionIncomeService {
         return transactionIncomeRepository.findById(transactionIncomeID);
     }
 
-    //Get income transaction by name or description or amount or date
+//    //Get income transaction by name or description or amount or date
+//    public List<TransactionIncomeModel> getTransactionIncomeByNameOrDescriptionOrAmountOrDate(
+//            TransactionIncomeType name, String description, BigDecimal amount, LocalDate date) {
+//        return transactionIncomeRepository.findByNameOrDescriptionContainsOrAmountOrDateOrderByDateDesc(name, description, amount, date);
+//    }
+
+    //Dynamic query to get income transaction by filters
     public List<TransactionIncomeModel> getTransactionIncomeByNameOrDescriptionOrAmountOrDate(
-            TransactionIncomeType name, String description, BigDecimal amount, LocalDate date) {
-        return transactionIncomeRepository.findByNameOrDescriptionContainsOrAmountOrDateOrderByDateDesc(name, description, amount, date);
+            TransactionIncomeType name, String description, BigDecimal amount, LocalDate date){
+
+        //Dynamic query specification
+        Specification<TransactionIncomeModel> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            //Filter by name (enum type)
+            if(name != null){
+                predicates.add(criteriaBuilder.equal(root.get("name"), name));
+            }
+            //Filter by description (partial match)
+            if(description != null && !description.isEmpty()){
+                predicates.add(criteriaBuilder.like(root.get("description"), "%" + description + "%"));
+            }
+            //Filter by amount
+            if(amount != null){
+                predicates.add(criteriaBuilder.equal(root.get("amount"), amount));
+            }
+            //Filter by date
+            if(date != null) {
+                predicates.add(criteriaBuilder.equal(root.get("date"), date));
+            }
+            //Combine predicates using And Logic
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        //Use the repository to execute the dynamic query
+        return transactionIncomeRepository.findAll(specification);
+
     }
+
 
 }

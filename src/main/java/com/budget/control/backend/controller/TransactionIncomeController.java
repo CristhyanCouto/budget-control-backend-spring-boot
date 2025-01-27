@@ -14,6 +14,7 @@ import com.budget.control.backend.validator.UUIDValidator;
 import com.budget.control.backend.validator.response.TransactionIncomeValidatorResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.math.BigDecimal;
@@ -114,7 +115,7 @@ public class TransactionIncomeController {
             if (name != null && !name.isEmpty()) {
                 try {
                     //Try to convert the value 'name' to enum, if not possible, throw an error.
-                    transactionIncomeType = TransactionIncomeType.valueOf(name);
+                    transactionIncomeType = TransactionIncomeType.valueOf(name.trim());
                 } catch (IllegalArgumentException e) {
                     throw new InvalidFieldException("Invalid value provided for TransactionIncomeType: " + name);
                 }
@@ -122,13 +123,14 @@ public class TransactionIncomeController {
 
             // If 'transactionIncomeType' has been defined, validates it
             if (transactionIncomeType != null) {
-                transactionIncomeValidatorResponse.validate(transactionIncomeType); // Valida o enum caso o 'name' tenha sido fornecido
+                transactionIncomeValidatorResponse.validate(transactionIncomeType); // Validates ENUM if it's provided
             }
 
             // Call the service to find the transactions with the provided params
             List<TransactionIncomeModel> result = transactionIncomeService
                     .getTransactionIncomeByNameOrDescriptionOrAmountOrDate(transactionIncomeType, description, amount, date);
 
+            // Map the found fields to a List of DTO to return a response of fields
             List<TransactionIncomeResponseDTO> response = result.stream()
                     .map(transactionIncome -> new TransactionIncomeResponseDTO(
                             transactionIncome.getId(),
@@ -141,17 +143,26 @@ public class TransactionIncomeController {
                             transactionIncome.getUserId()))
                     .toList();
 
+            //If no fields were found. throw a Response Entity of Not Found 404
             if (response.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
 
+            //If fields were found, throw a Response Entity OK 200
             return ResponseEntity.ok(response);
 
-
-        } catch (InvalidFieldException e) {
+        }
+        //Invalid name field catch Exception
+        catch (InvalidFieldException e) {
             var errorDTO = ErrorResponse.invalidFieldResponse(e.getMessage());
             return ResponseEntity.status(errorDTO.status()).body(errorDTO);
-        } catch (Exception e) {
+        }
+        //Invalid date catch Exception
+        catch (MethodArgumentTypeMismatchException e) {
+            return ResponseEntity.badRequest().body("Invalid date format. Expected format is YYYY-MM-DD.");
+        }
+        // Generic catch Exception
+        catch (Exception e) {
             e.printStackTrace();  // Shows the error in the console
             var errorDTO = ErrorResponse.invalidFieldResponse("An unexpected error occurred.");
             return ResponseEntity.status(errorDTO.status()).body(errorDTO);
