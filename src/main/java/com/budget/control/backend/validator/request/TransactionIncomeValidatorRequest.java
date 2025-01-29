@@ -1,12 +1,10 @@
 package com.budget.control.backend.validator.request;
 
-import com.budget.control.backend.controller.dto.error.ErrorResponse;
 import com.budget.control.backend.exception.DuplicatedRegisterException;
 import com.budget.control.backend.exception.InvalidFieldException;
 import com.budget.control.backend.exception.NullFieldException;
 import com.budget.control.backend.model.TransactionIncomeModel;
 import com.budget.control.backend.repository.TransactionIncomeRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;

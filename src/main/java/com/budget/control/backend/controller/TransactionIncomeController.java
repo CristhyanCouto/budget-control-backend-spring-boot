@@ -8,8 +8,6 @@ import com.budget.control.backend.model.TransactionIncomeModel;
 import com.budget.control.backend.service.TransactionIncomeService;
 import com.budget.control.backend.type.TransactionIncomeType;
 import com.budget.control.backend.validator.UUIDValidator;
-import com.budget.control.backend.validator.request.TransactionIncomeValidatorRequest;
-import com.budget.control.backend.validator.response.TransactionIncomeValidatorResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -29,7 +27,6 @@ public class TransactionIncomeController {
 
     //Dependency Injection
     private final TransactionIncomeService transactionIncomeService;
-    private final TransactionIncomeValidatorResponse transactionIncomeValidatorResponse = new TransactionIncomeValidatorResponse();
     private final UUIDValidator uuidValidator;
 
     //Constructor Injection
@@ -74,8 +71,10 @@ public class TransactionIncomeController {
 
             //Get the income transaction by id from string to UUID
             var transactionIncomeID = UUID.fromString(id);
+
             //Receives an Optional of TransactionIncomeModel case the ID does not exist
             Optional<TransactionIncomeModel> transactionIncomeModelOptional = transactionIncomeService.getTransactionIncomeById(transactionIncomeID);
+
             //If the ID exists, map the entity to the DTO and return it
             if (transactionIncomeModelOptional.isPresent()) {
                 TransactionIncomeModel transactionIncomeEntity = transactionIncomeModelOptional.get();
@@ -117,15 +116,10 @@ public class TransactionIncomeController {
             if (name != null && !name.isEmpty()) {
                 try {
                     //Try to convert the value 'name' to enum, if not possible, throw an error.
-                    transactionIncomeType = TransactionIncomeType.valueOf(name.trim());
+                    transactionIncomeType = TransactionIncomeType.valueOf(name.trim().toUpperCase());
                 } catch (IllegalArgumentException e) {
                     throw new InvalidFieldException("Invalid value provided for TransactionIncomeType: " + name);
                 }
-            }
-
-            // If 'transactionIncomeType' has been defined, validates it
-            if (transactionIncomeType != null) {
-                transactionIncomeValidatorResponse.validate(transactionIncomeType); // Validates ENUM if it's provided
             }
 
             // Validate date range
@@ -168,12 +162,6 @@ public class TransactionIncomeController {
         catch (MethodArgumentTypeMismatchException e) {
             return ResponseEntity.badRequest().body("Invalid date format. Expected format is YYYY-MM-DD.");
         }
-        // Generic catch Exception
-        catch (Exception e) {
-            e.printStackTrace();  // Shows the error in the console
-            var errorDTO = ErrorResponse.invalidFieldResponse("An unexpected error occurred.");
-            return ResponseEntity.status(errorDTO.status()).body(errorDTO);
-        }
     }
 
     //Update transaction income by id
@@ -196,31 +184,7 @@ public class TransactionIncomeController {
 
                 //Update only fields provided in the request body
                 if (transactionIncomeRequestDTO.name() != null) {
-
-                        // Transaction Type to verify if the name is inside the ENUM
-                        TransactionIncomeType transactionIncomeType = null;
-
-                        //Passing the ENUM value to a String so it can be verified
-                        String name = String.valueOf(transactionIncomeRequestDTO.name());
-
-                        // Verify if the param 'name' has been provided and if is valid
-                        if (name != null && !name.isEmpty()) {
-                            try {
-                                //Try to convert the value 'name' to enum, if not possible, throw an error.
-                                transactionIncomeType = TransactionIncomeType.valueOf(name.trim());
-                            } catch (IllegalArgumentException e) {
-                                throw new InvalidFieldException("Invalid value provided for TransactionIncomeType: " + name);
-                            }
-                        }
-
-                        // If 'transactionIncomeType' has been defined, validates it
-                        if (transactionIncomeType != null) {
-                            transactionIncomeValidatorResponse.validate(transactionIncomeType); // Validates ENUM if it's provided
-                        }
-
-                        // UPDATE the name
-                        existingTransaction.setName(transactionIncomeRequestDTO.name());
-
+                    existingTransaction.setName(transactionIncomeRequestDTO.name());
                 }
                 if (transactionIncomeRequestDTO.description() != null) {
                     existingTransaction.setDescription(transactionIncomeRequestDTO.description());
@@ -275,11 +239,11 @@ public class TransactionIncomeController {
                 return ResponseEntity.notFound().build();
             }
 
-            // If the Optional has the values of the searched object, deletes it and return a ok no content
+            // If the Optional has the values of the searched object, deletes it and return an ok no content
             transactionIncomeService.deleteTransactionIncomeById(transactionIncomeModelOptional.get());
             return ResponseEntity.noContent().build();
         }
-        // If the UUID has no value format, throw invalid format error
+        // If the UUID has no value format, throw an invalid format error
         catch (IllegalArgumentException e) {
             var errorDTO = ErrorResponse.invalidUUIDResponse(e.getMessage());
             return ResponseEntity.status(errorDTO.status()).body(errorDTO);
