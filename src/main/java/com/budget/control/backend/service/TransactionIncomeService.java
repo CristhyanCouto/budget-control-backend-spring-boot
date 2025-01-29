@@ -97,4 +97,11 @@ public class TransactionIncomeService {
     }
 
 
+    // Delete transaction income by ID
+    public void deleteTransactionIncomeById(TransactionIncomeModel transactionIncomeModel) {
+        if (transactionIncomeModel.getId() != null){
+            uuidValidator.validateUUID(transactionIncomeModel.getId().toString());
+        }
+        transactionIncomeRepository.delete(transactionIncomeModel);
+    }
 }

@@ -3,14 +3,12 @@ package com.budget.control.backend.controller;
 import com.budget.control.backend.controller.dto.error.ErrorResponse;
 import com.budget.control.backend.controller.dto.request.TransactionIncomeRequestDTO;
 import com.budget.control.backend.controller.dto.response.TransactionIncomeResponseDTO;
-import com.budget.control.backend.exception.DuplicatedRegisterException;
-import com.budget.control.backend.exception.InvalidFieldException;
-import com.budget.control.backend.exception.InvalidUUIDException;
-import com.budget.control.backend.exception.NullFieldException;
+import com.budget.control.backend.exception.*;
 import com.budget.control.backend.model.TransactionIncomeModel;
 import com.budget.control.backend.service.TransactionIncomeService;
 import com.budget.control.backend.type.TransactionIncomeType;
 import com.budget.control.backend.validator.UUIDValidator;
+import com.budget.control.backend.validator.request.TransactionIncomeValidatorRequest;
 import com.budget.control.backend.validator.response.TransactionIncomeValidatorResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,8 +43,9 @@ public class TransactionIncomeController {
     @PostMapping
     public ResponseEntity<Object> saveIncomeTransaction(@RequestBody TransactionIncomeRequestDTO transactionIncomeRequestDTO) {
         try {
-            //Map the DTO to the entity
+            // Map the DTO to the entity
             TransactionIncomeModel transactionIncomeEntity = transactionIncomeRequestDTO.mapToTransactionIncomeModel();
+
             //Save the income transaction
             transactionIncomeService.saveTransactionIncome(transactionIncomeEntity);
 
@@ -183,20 +182,25 @@ public class TransactionIncomeController {
             @PathVariable("id") String id,
             @RequestBody TransactionIncomeRequestDTO transactionIncomeRequestDTO){
         try{
+            // State the id from string
             UUID transactionIncomeId = UUID.fromString(id);
 
-            // Retrieve existing transaction
+            // Retrieve existing transaction with an Optional
             Optional<TransactionIncomeModel> transactionIncomeModelOptional =
                     transactionIncomeService.getTransactionIncomeById(transactionIncomeId);
 
             if (transactionIncomeModelOptional.isPresent()){
 
+                // Creates a Model object with the found values
                 TransactionIncomeModel existingTransaction = transactionIncomeModelOptional.get();
 
                 //Update only fields provided in the request body
                 if (transactionIncomeRequestDTO.name() != null) {
+
+                        // Transaction Type to verify if the name is inside the ENUM
                         TransactionIncomeType transactionIncomeType = null;
 
+                        //Passing the ENUM value to a String so it can be verified
                         String name = String.valueOf(transactionIncomeRequestDTO.name());
 
                         // Verify if the param 'name' has been provided and if is valid
@@ -214,6 +218,7 @@ public class TransactionIncomeController {
                             transactionIncomeValidatorResponse.validate(transactionIncomeType); // Validates ENUM if it's provided
                         }
 
+                        // UPDATE the name
                         existingTransaction.setName(transactionIncomeRequestDTO.name());
 
                 }
@@ -239,6 +244,7 @@ public class TransactionIncomeController {
             }
             // Return 404 if the transaction is not found
             return ResponseEntity.notFound().build();
+
         } //Invalid name field catch Exception
         catch (InvalidFieldException e) {
             var errorDTO = ErrorResponse.invalidFieldResponse(e.getMessage());
@@ -251,6 +257,34 @@ public class TransactionIncomeController {
             return ResponseEntity.status(errorDTO.status()).body(errorDTO);
         } catch (Exception e) {
             var errorDTO = ErrorResponse.unexpectedErrorResponse("An unexpected error occurred.");
+            return ResponseEntity.status(errorDTO.status()).body(errorDTO);
+        }
+    }
+
+    //Delete transaction income
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deleteTransactionIncomeById(@PathVariable("id") String id){
+        try{
+            // States de ID from string to a var
+            UUID transactionIncomeId = UUID.fromString(id);
+            // Create an Optional Object from the id provided
+            Optional<TransactionIncomeModel> transactionIncomeModelOptional = transactionIncomeService.getTransactionIncomeById(transactionIncomeId);
+
+            // If the object does not return values, throw a not found
+            if (transactionIncomeModelOptional.isEmpty()){
+                return ResponseEntity.notFound().build();
+            }
+
+            // If the Optional has the values of the searched object, deletes it and return a ok no content
+            transactionIncomeService.deleteTransactionIncomeById(transactionIncomeModelOptional.get());
+            return ResponseEntity.noContent().build();
+        }
+        // If the UUID has no value format, throw invalid format error
+        catch (IllegalArgumentException e) {
+            var errorDTO = ErrorResponse.invalidUUIDResponse(e.getMessage());
+            return ResponseEntity.status(errorDTO.status()).body(errorDTO);
+        } catch (NonAuthorizedException e) {
+            var errorDTO = ErrorResponse.standardResponse(e.getMessage());
             return ResponseEntity.status(errorDTO.status()).body(errorDTO);
         }
     }

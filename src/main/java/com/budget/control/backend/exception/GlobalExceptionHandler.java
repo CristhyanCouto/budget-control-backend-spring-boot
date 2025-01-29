@@ -4,6 +4,7 @@ import com.budget.control.backend.controller.dto.error.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -19,13 +20,25 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleHttpMessageConversionException(HttpMessageConversionException e) {
         Throwable cause = e.getCause();
         while (cause != null) {
-            if (cause instanceof DateTimeException) {
-                return ResponseEntity.badRequest().body("Invalid date format. Expected format is YYYY-MM-DD.");
+            switch (cause) {
+                case DateTimeException dateTimeException -> {
+                    return ResponseEntity.badRequest().body("Invalid date format. Expected format is YYYY-MM-DD.");
+                }
+                case NumberFormatException numberFormatException -> {
+                    return ResponseEntity.badRequest().body("Invalid number format. Expected a valid decimal number.");
+                }
+                case InvalidFieldException invalidFieldException -> {
+                    return ResponseEntity.badRequest().body(cause.getMessage());
+                }
+                case IllegalArgumentException illegalArgumentException -> {
+                    return ResponseEntity.badRequest().body(cause.getMessage());
+                }
+                default -> {
+                }
             }
             cause = cause.getCause();
         }
-        String errorMessage = "Invalid transaction name.";
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid format.");
     }
 
     @ExceptionHandler(InvalidFieldException.class)

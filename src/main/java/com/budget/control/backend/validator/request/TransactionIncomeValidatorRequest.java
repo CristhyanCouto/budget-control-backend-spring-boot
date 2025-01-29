@@ -1,27 +1,36 @@
 package com.budget.control.backend.validator.request;
 
+import com.budget.control.backend.controller.dto.error.ErrorResponse;
 import com.budget.control.backend.exception.DuplicatedRegisterException;
+import com.budget.control.backend.exception.InvalidFieldException;
 import com.budget.control.backend.exception.NullFieldException;
 import com.budget.control.backend.model.TransactionIncomeModel;
 import com.budget.control.backend.repository.TransactionIncomeRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 
 @Component
 public class TransactionIncomeValidatorRequest {
 
+    // Dependency Injection
     private final TransactionIncomeRepository transactionIncomeRepository;
 
+    // Constructor
     public TransactionIncomeValidatorRequest(TransactionIncomeRepository transactionIncomeRepository) {
         this.transactionIncomeRepository = transactionIncomeRepository;
     }
 
+    // Validate Method
     public void validate(TransactionIncomeModel transactionIncomeModel) {
         if (isTransactionIncomeDuplicated(transactionIncomeModel)) {
             throw new DuplicatedRegisterException("Transaction income already exists");
         }
         isTransactionIncomeNull(transactionIncomeModel);
+        isTransactionAmountOnBounds(transactionIncomeModel);
     }
 
     //Check if the transaction income is duplicated
@@ -51,5 +60,34 @@ public class TransactionIncomeValidatorRequest {
         if(transactionIncomeModel.getDate() == null) {
             throw new NullFieldException("Transaction income date cannot be null");
         }
+    }
+
+    // Checks if the amount BigDecimal has the right format
+    private void isTransactionAmountOnBounds(TransactionIncomeModel transactionIncomeModel){
+
+            if (transactionIncomeModel.getAmount() != null) {
+                BigDecimal amount = transactionIncomeModel.getAmount();
+
+                // Ensure amount is greater than zero
+                if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new InvalidFieldException("Transaction amount must be greater than zero.");
+                }
+
+                // Ensure amount does not exceed (18,2)
+                BigDecimal maxLimit = new BigDecimal("9999999999999999.99");
+
+                // Normalize scale before comparison
+                amount = amount.setScale(2, RoundingMode.HALF_UP);
+                maxLimit = maxLimit.setScale(2, RoundingMode.HALF_UP);
+
+                if (amount.compareTo(maxLimit) > 0) {
+                    throw new InvalidFieldException("Transaction amount exceed the allowed limit of 9999999999999999.99.");
+                }
+
+                // Ensure amount has at most two decimal places
+                if (amount.scale() > 2) {
+                    throw new InvalidFieldException("Transaction amount must have at most two decimal places.");
+                }
+            }
     }
 }
