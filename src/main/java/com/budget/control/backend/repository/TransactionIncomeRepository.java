@@ -2,11 +2,8 @@ package com.budget.control.backend.repository;
 
 import com.budget.control.backend.model.TransactionIncomeModel;
 import com.budget.control.backend.type.TransactionIncomeType;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

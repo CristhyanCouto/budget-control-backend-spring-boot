@@ -70,7 +70,7 @@ public class TransactionIncomeController {
             uuidValidator.validateUUID(id);
 
             //Get the income transaction by id from string to UUID
-            var transactionIncomeID = UUID.fromString(id);
+            UUID transactionIncomeID = UUID.fromString(id);
 
             //Receives an Optional of TransactionIncomeModel case the ID does not exist
             Optional<TransactionIncomeModel> transactionIncomeModelOptional = transactionIncomeService.getTransactionIncomeById(transactionIncomeID);

@@ -60,8 +60,11 @@ public class TransactionIncomeService {
                 predicates.add(criteriaBuilder.equal(root.get("name"), name));
             }
             //Filter by description (partial match)
-            if(description != null && !description.isEmpty()){
-                predicates.add(criteriaBuilder.like(root.get("description"), "%" + description + "%"));
+            if (description != null && !description.isEmpty()) {
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("description")),
+                        "%" + description.toLowerCase() + "%"
+                ));
             }
             //Filter by amount
             if(amount != null){
