@@ -20,7 +20,7 @@ public record TransactionBenefitResponseDTO(
 ) {
     // Mapping the data from DTO to the entity
     // This method will be used in the controller to return the transaction benefit
-    public TransactionBenefitModel mapToTransactionBenifitModel() {
+    public TransactionBenefitModel mapToTransactionBenefitModel() {
         TransactionBenefitModel transactionBenefitModel = new TransactionBenefitModel();
         transactionBenefitModel.setId(this.id);
         transactionBenefitModel.setName(this.name);
