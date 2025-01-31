@@ -1,5 +1,9 @@
 package com.budget.control.backend.type;
 
+import com.budget.control.backend.deserializer.TransactionExpenseTypeDeserializer;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+@JsonDeserialize(using = TransactionExpenseTypeDeserializer.class)
 public enum TransactionExpenseType {
     ATM_FEES,
     APP_PURCHASES,
