@@ -69,7 +69,8 @@ public class TransactionBenefitValidatorRequest {
 
             // Ensure the amount is greater than zero
             if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new InvalidFieldException("Transaction amount must be greater than zero.");
+                throw new InvalidFieldException(
+                        "Transaction amount must be greater than zero.");
             }
 
             // Ensure amount does not exceed (18,2)
@@ -80,12 +81,14 @@ public class TransactionBenefitValidatorRequest {
             maxLimit = maxLimit.setScale(2, RoundingMode.HALF_UP);
 
             if (amount.compareTo(maxLimit) > 0) {
-                throw new InvalidFieldException("Transaction amount exceed the allowed limit of 9999999999999999.99.");
+                throw new InvalidFieldException(
+                        "Transaction amount exceed the allowed limit of 9999999999999999.99.");
             }
 
             // Ensure amount has at most two decimal places
             if (amount.scale() > 2) {
-                throw new InvalidFieldException("Transaction amount must have at most two decimal places.");
+                throw new InvalidFieldException(
+                        "Transaction amount must have at most two decimal places.");
             }
         }
     }

@@ -4,10 +4,14 @@ import com.budget.control.backend.controller.dto.error.ErrorResponse;
 import com.budget.control.backend.controller.dto.request.TransactionBenefitRequestDTO;
 import com.budget.control.backend.controller.dto.response.TransactionBenefitResponseDTO;
 import com.budget.control.backend.exception.*;
+import com.budget.control.backend.mappers.TransactionBenefitMapper;
 import com.budget.control.backend.model.TransactionBenefitModel;
 import com.budget.control.backend.service.TransactionBenefitService;
 import com.budget.control.backend.type.TransactionBenefitType;
 import com.budget.control.backend.validator.UUIDValidator;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -23,37 +27,31 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/transaction-benefit")
+@RequiredArgsConstructor
 public class TransactionBenefitController {
 
     //Dependency Injection
     private final TransactionBenefitService transactionBenefitService;
     private final UUIDValidator uuidValidator;
-
-    //Constructor Injection
-    public TransactionBenefitController(
-            TransactionBenefitService transactionBenefitService,
-            UUIDValidator uuidValidator
-    ) {
-        this.transactionBenefitService = transactionBenefitService;
-        this.uuidValidator = uuidValidator;
-    }
+    private final TransactionBenefitMapper transactionBenefitMapper;
 
     //Saving a benefit transaction in the database
     @PostMapping
-    public ResponseEntity<Object> saveBenefitTransaction(@RequestBody TransactionBenefitRequestDTO transactionBenefitRequestDTO) {
+    public ResponseEntity<Object> saveBenefitTransaction(@RequestBody @Valid TransactionBenefitRequestDTO transactionBenefitRequestDTO) {
         try{
             // Map the DTO to the entity
-            TransactionBenefitModel transactionBenefitEntity = transactionBenefitRequestDTO.mapToTransactionBenefitModel();
+            TransactionBenefitModel transactionBenefitModel = transactionBenefitMapper.toRequestEntity(transactionBenefitRequestDTO);
 
             // Save the benefit transaction
-            transactionBenefitService.saveTransactionBenefit(transactionBenefitEntity);
+            transactionBenefitService.saveTransactionBenefit(transactionBenefitModel);
 
             // Return a response with the status code 201 and the URL location of the new resource in the header
             URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                     .path("/{id}")
-                    .buildAndExpand(transactionBenefitEntity.getId())
+                    .buildAndExpand(transactionBenefitModel.getId())
                     .toUri();
             return ResponseEntity.created(location).build();
+
         }// Handle duplication error
         catch (DuplicatedRegisterException e) {
             var errorDTO = ErrorResponse.conflictResponse(e.getMessage());
@@ -67,10 +65,12 @@ public class TransactionBenefitController {
 
     // Getting a benefit transaction by id
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getBenefitTransactionById(@PathVariable("id") String id) {
-        try{
+    public ResponseEntity<?> getBenefitTransactionById(@PathVariable("id") String id) {
+
+        try {
             // Validate the UUID format
             uuidValidator.validateUUID(id);
+
 
             // Get the benefit transaction by id from string to UUID
             UUID transactionIncomeID = UUID.fromString(id);
@@ -79,25 +79,14 @@ public class TransactionBenefitController {
             Optional<TransactionBenefitModel> transactionBenefitModelOptional = transactionBenefitService.getTransactionBenefitById(transactionIncomeID);
 
             // If the ID exists, map the entity to the DTO and return it
-            if (transactionBenefitModelOptional.isPresent()) {
-                TransactionBenefitModel transactionBenefitEntity = transactionBenefitModelOptional.get();
-                TransactionBenefitResponseDTO transactionBenefitResponseDTO = new TransactionBenefitResponseDTO(
-                        transactionBenefitEntity.getId(),
-                        transactionBenefitEntity.getName(),
-                        transactionBenefitEntity.getDescription(),
-                        transactionBenefitEntity.getAmount(),
-                        transactionBenefitEntity.getDate(),
-                        transactionBenefitEntity.getCreatedAt(),
-                        transactionBenefitEntity.getUpdatedAt(),
-                        transactionBenefitEntity.getUserId()
-                );
-                return  ResponseEntity.ok(transactionBenefitResponseDTO);
-            }
-            // If the ID does not exist, return 404 status code
-            return ResponseEntity.notFound().build();
-        }// Handle invalid UUID
-        catch (InvalidUUIDException e) {
-            var errorDTO = ErrorResponse.invalidUUIDResponse(e.getMessage());
+            return transactionBenefitService
+                    .getTransactionBenefitById(transactionIncomeID)
+                    .map(transaction -> {
+                        TransactionBenefitResponseDTO transactionBenefitResponseDTO = transactionBenefitMapper.toResponseDTO(transaction);
+                        return ResponseEntity.ok(transactionBenefitResponseDTO);
+                    }).orElseGet(() -> ResponseEntity.notFound().build());
+        }catch (InvalidUUIDException e) {
+            var errorDTO = ErrorResponse.invalidFieldResponse(e.getMessage());
             return ResponseEntity.status(errorDTO.status()).body(errorDTO);
         }
     }
@@ -136,16 +125,7 @@ public class TransactionBenefitController {
 
             // Map the found fields to a List of DTO to return a response of fields
             List<TransactionBenefitResponseDTO> response = result.stream()
-                    .map(transactionBenefit -> new TransactionBenefitResponseDTO(
-                            transactionBenefit.getId(),
-                            transactionBenefit.getName(),
-                            transactionBenefit.getDescription(),
-                            transactionBenefit.getAmount(),
-                            transactionBenefit.getDate(),
-                            transactionBenefit.getCreatedAt(),
-                            transactionBenefit.getUpdatedAt(),
-                            transactionBenefit.getUserId()
-                    ))
+                    .map(transactionBenefitMapper::toResponseDTO)
                     .toList();
 
             // If no fields were found, throw a Response Entity of Not Found 404

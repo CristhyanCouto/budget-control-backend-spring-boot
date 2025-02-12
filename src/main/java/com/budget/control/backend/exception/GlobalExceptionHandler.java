@@ -1,16 +1,22 @@
 package com.budget.control.backend.exception;
 
+import com.budget.control.backend.controller.dto.error.ErrorField;
 import com.budget.control.backend.controller.dto.error.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -53,12 +59,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 
-    // Generic Method Argument Type Mismatch Handler
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Object> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
-        if (ex.getRequiredType() != null && ex.getRequiredType().equals(LocalDate.class)) {
-            return ResponseEntity.badRequest().body("Invalid date format. Expected format is YYYY-MM-DD.");
-        }
-        return ResponseEntity.badRequest().body("Invalid parameter: " + ex.getMessage());
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ErrorResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        List<FieldError> fieldErrors = e.getFieldErrors();
+        List<ErrorField> errorFieldList = fieldErrors
+                .stream()
+                .map(fe -> new ErrorField(fe.getField(), fe.getDefaultMessage()))
+                .collect(Collectors.toList());
+
+        return new ErrorResponse(HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                "Validation error.",
+                errorFieldList);
     }
 }
