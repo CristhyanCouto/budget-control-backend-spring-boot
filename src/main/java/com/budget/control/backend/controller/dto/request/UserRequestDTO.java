@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.br.CPF;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record UserRequestDTO(
         @NotNull(message = "Required field.")
@@ -20,9 +21,14 @@ public record UserRequestDTO(
         @NotNull(message = "Required field.")
         @Email
         String email,
-        @NotNull(message = "Required field.")
         String phone,
         @NotNull(message = "Required field.")
-        UserRoleType role
+        String encryptedPassword,
+        Boolean userAuthenticated,
+        @NotNull(message = "Required field.")
+        UserRoleType role,
+        String confirmationToken,
+        String recoveryToken,
+        LocalDateTime recoveryTokenExpiration
 ) {
 }
