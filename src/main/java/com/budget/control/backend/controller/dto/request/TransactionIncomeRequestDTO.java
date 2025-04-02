@@ -2,24 +2,19 @@ package com.budget.control.backend.controller.dto.request;
 
 import com.budget.control.backend.model.TransactionIncomeModel;
 import com.budget.control.backend.type.TransactionIncomeType;
+import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record TransactionIncomeRequestDTO(
+        @NotNull(message = "Required field.")
         TransactionIncomeType name,
         String description,
+        @NotNull(message = "Required field.")
         BigDecimal amount,
+        @NotNull(message = "Required field.")
         LocalDate date
 ) {
-    //Map the data from the DTO to the model
-    //This method will be used in the controller to save the transaction income
-    public TransactionIncomeModel mapToTransactionIncomeModel() {
-        TransactionIncomeModel transactionIncomeModel = new TransactionIncomeModel();
-        transactionIncomeModel.setName(this.name);
-        transactionIncomeModel.setDescription(this.description);
-        transactionIncomeModel.setAmount(this.amount);
-        transactionIncomeModel.setDate(this.date);
-        return transactionIncomeModel;
-    }
+
 }

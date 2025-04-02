@@ -4,10 +4,13 @@ import com.budget.control.backend.controller.dto.error.ErrorResponse;
 import com.budget.control.backend.controller.dto.request.TransactionExpenseRequestDTO;
 import com.budget.control.backend.controller.dto.response.TransactionExpenseResponseDTO;
 import com.budget.control.backend.exception.*;
+import com.budget.control.backend.mappers.TransactionExpenseMapper;
 import com.budget.control.backend.model.TransactionExpenseModel;
 import com.budget.control.backend.service.TransactionExpenseService;
 import com.budget.control.backend.type.TransactionExpenseType;
 import com.budget.control.backend.validator.UUIDValidator;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -23,32 +26,28 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/transaction-expense")
+@RequiredArgsConstructor
 public class TransactionExpenseController {
 
     // Dependency Injection
     private final TransactionExpenseService transactionExpenseService;
     private final UUIDValidator uuidValidator;
-
-    public TransactionExpenseController(TransactionExpenseService transactionExpenseService,
-                                        UUIDValidator uuidValidator) {
-        this.transactionExpenseService = transactionExpenseService;
-        this.uuidValidator = uuidValidator;
-    }
+    private final TransactionExpenseMapper transactionExpenseMapper;
 
     // Saving an expense transaction in the database
     @PostMapping
-    public ResponseEntity<Object> saveExpenseTransaction(@RequestBody TransactionExpenseRequestDTO transactionExpenseRequestDTO) {
+    public ResponseEntity<Object> saveExpenseTransaction(@RequestBody @Valid TransactionExpenseRequestDTO transactionExpenseRequestDTO) {
         try {
             // Map the DTO to the entity
-            TransactionExpenseModel transactionExpenseEntity = transactionExpenseRequestDTO.mapToTransactionExpenseModel();
+            TransactionExpenseModel transactionExpenseModel = transactionExpenseMapper.toRequestEntity(transactionExpenseRequestDTO);
 
             // Save the expense transaction
-            transactionExpenseService.saveTransactionExpense(transactionExpenseEntity);
+            transactionExpenseService.saveTransactionExpense(transactionExpenseModel);
 
             // Return a response with the status code 201 and the URL location of the new resource in the header
             URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                     .path("/{id}")
-                    .buildAndExpand(transactionExpenseEntity.getId())
+                    .buildAndExpand(transactionExpenseModel.getId())
                     .toUri();
             return ResponseEntity.created(location).build();
         }catch (DuplicatedRegisterException e) {
@@ -62,7 +61,7 @@ public class TransactionExpenseController {
 
     // Getting an expense transaction by id
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getExpenseTransactionById(@PathVariable("id") String id) {
+    public ResponseEntity<?> getExpenseTransactionById(@PathVariable("id") String id) {
         try {
             // Validate the UUID format
             uuidValidator.validateUUID(id);
@@ -73,24 +72,13 @@ public class TransactionExpenseController {
             // Receives an Optional of TransactionExpenseModel case the ID does not exist
             Optional<TransactionExpenseModel> transactionExpenseModelOptional = transactionExpenseService.getTransactionExpenseById(transactionExpenseId);
 
-            // If the ID exists, map the entity to the DTO and return it
-            if (transactionExpenseModelOptional.isPresent()) {
-                TransactionExpenseModel transactionExpenseEntity = transactionExpenseModelOptional.get();
-                TransactionExpenseResponseDTO transactionExpenseResponseDTO = new TransactionExpenseResponseDTO(
-                        transactionExpenseEntity.getId(),
-                        transactionExpenseEntity.getName(),
-                        transactionExpenseEntity.getDescription(),
-                        transactionExpenseEntity.getAmount(),
-                        transactionExpenseEntity.getDate(),
-                        transactionExpenseEntity.getRecurrent(),
-                        transactionExpenseEntity.getCreatedAt(),
-                        transactionExpenseEntity.getUpdatedAt(),
-                        transactionExpenseEntity.getUserId()
-                );
-                return ResponseEntity.ok(transactionExpenseResponseDTO);
-            }
-            // If the ID does not exist, return 404 status code
-            return ResponseEntity.notFound().build();
+            return transactionExpenseService
+                    .getTransactionExpenseById(transactionExpenseId)
+                    .map(transaction -> {
+                        TransactionExpenseResponseDTO transactionExpenseResponseDTO = transactionExpenseMapper.toResponseDTO(transaction);
+                        return ResponseEntity.ok(transactionExpenseResponseDTO);
+                    }).orElseGet(() -> ResponseEntity.notFound().build());
+
         }catch (InvalidUUIDException e) {
             //If the UUID is invalid, return a 400 status code with an error message invalid format
             var errorDTO = ErrorResponse.invalidUUIDResponse(e.getMessage());
@@ -133,17 +121,7 @@ public class TransactionExpenseController {
 
             // Map the found fields to a List of DTO to return a response of fields
             List<TransactionExpenseResponseDTO> response = result.stream()
-                    .map(transactionExpense -> new TransactionExpenseResponseDTO(
-                            transactionExpense.getId(),
-                            transactionExpense.getName(),
-                            transactionExpense.getDescription(),
-                            transactionExpense.getAmount(),
-                            transactionExpense.getDate(),
-                            transactionExpense.getRecurrent(),
-                            transactionExpense.getCreatedAt(),
-                            transactionExpense.getUpdatedAt(),
-                            transactionExpense.getUserId()
-                    ))
+                    .map(transactionExpenseMapper::toResponseDTO)
                     .toList();
 
             //If no fields were found. throw a Response Entity of Not Found 404

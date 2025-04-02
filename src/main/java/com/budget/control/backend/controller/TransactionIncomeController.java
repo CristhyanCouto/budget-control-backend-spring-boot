@@ -4,10 +4,13 @@ import com.budget.control.backend.controller.dto.error.ErrorResponse;
 import com.budget.control.backend.controller.dto.request.TransactionIncomeRequestDTO;
 import com.budget.control.backend.controller.dto.response.TransactionIncomeResponseDTO;
 import com.budget.control.backend.exception.*;
+import com.budget.control.backend.mappers.TransactionIncomeMapper;
 import com.budget.control.backend.model.TransactionIncomeModel;
 import com.budget.control.backend.service.TransactionIncomeService;
 import com.budget.control.backend.type.TransactionIncomeType;
 import com.budget.control.backend.validator.UUIDValidator;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -23,33 +26,28 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/transaction-income")
+@RequiredArgsConstructor
 public class TransactionIncomeController {
 
     //Dependency Injection
     private final TransactionIncomeService transactionIncomeService;
     private final UUIDValidator uuidValidator;
-
-    //Constructor Injection
-    public TransactionIncomeController(TransactionIncomeService transactionIncomeService,
-                                       UUIDValidator uuidValidator) {
-        this.transactionIncomeService = transactionIncomeService;
-        this.uuidValidator = uuidValidator;
-    }
+    private final TransactionIncomeMapper transactionIncomeMapper;
 
     //Saving an income transaction in the database
     @PostMapping
-    public ResponseEntity<Object> saveIncomeTransaction(@RequestBody TransactionIncomeRequestDTO transactionIncomeRequestDTO) {
+    public ResponseEntity<Object> saveIncomeTransaction(@RequestBody @Valid TransactionIncomeRequestDTO transactionIncomeRequestDTO) {
         try {
             // Map the DTO to the entity
-            TransactionIncomeModel transactionIncomeEntity = transactionIncomeRequestDTO.mapToTransactionIncomeModel();
+            TransactionIncomeModel transactionIncomeModel = transactionIncomeMapper.toRequestEntity(transactionIncomeRequestDTO);
 
             //Save the income transaction
-            transactionIncomeService.saveTransactionIncome(transactionIncomeEntity);
+            transactionIncomeService.saveTransactionIncome(transactionIncomeModel);
 
             //Return a response with the status code 201 and the URL location of the new resource in the header
             URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                     .path("/{id}")
-                    .buildAndExpand(transactionIncomeEntity.getId())
+                    .buildAndExpand(transactionIncomeModel.getId())
                     .toUri();
             return ResponseEntity.created(location).build();
 
@@ -64,7 +62,7 @@ public class TransactionIncomeController {
 
     //Getting an income transaction by id
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getIncomeTransactionById(@PathVariable("id") String id) {
+    public ResponseEntity<?> getIncomeTransactionById(@PathVariable("id") String id) {
         try {
             //Validate the UUID format
             uuidValidator.validateUUID(id);
@@ -75,23 +73,12 @@ public class TransactionIncomeController {
             //Receives an Optional of TransactionIncomeModel case the ID does not exist
             Optional<TransactionIncomeModel> transactionIncomeModelOptional = transactionIncomeService.getTransactionIncomeById(transactionIncomeID);
 
-            //If the ID exists, map the entity to the DTO and return it
-            if (transactionIncomeModelOptional.isPresent()) {
-                TransactionIncomeModel transactionIncomeEntity = transactionIncomeModelOptional.get();
-                TransactionIncomeResponseDTO transactionIncomeResponseDTO = new TransactionIncomeResponseDTO(
-                        transactionIncomeEntity.getId(),
-                        transactionIncomeEntity.getName(),
-                        transactionIncomeEntity.getDescription(),
-                        transactionIncomeEntity.getAmount(),
-                        transactionIncomeEntity.getDate(),
-                        transactionIncomeEntity.getCreatedAt(),
-                        transactionIncomeEntity.getUpdatedAt(),
-                        transactionIncomeEntity.getUserId()
-                );
-                return ResponseEntity.ok(transactionIncomeResponseDTO);
-            }
-            //If the ID does not exist, return a 404 status code
-            return ResponseEntity.notFound().build();
+            return transactionIncomeService
+                    .getTransactionIncomeById(transactionIncomeID)
+                    .map(transaction -> {
+                        TransactionIncomeResponseDTO transactionIncomeResponseDTO = transactionIncomeMapper.toResponseDTO(transaction);
+                        return ResponseEntity.ok(transactionIncomeResponseDTO);
+                    }).orElseGet(() -> ResponseEntity.notFound().build());
         }catch (InvalidUUIDException e) {
             //If the UUID is invalid, return a 400 status code with an error message invalid format
             var errorDTO = ErrorResponse.invalidUUIDResponse(e.getMessage());
@@ -133,15 +120,7 @@ public class TransactionIncomeController {
 
             // Map the found fields to a List of DTO to return a response of fields
             List<TransactionIncomeResponseDTO> response = result.stream()
-                    .map(transactionIncome -> new TransactionIncomeResponseDTO(
-                            transactionIncome.getId(),
-                            transactionIncome.getName(),
-                            transactionIncome.getDescription(),
-                            transactionIncome.getAmount(),
-                            transactionIncome.getDate(),
-                            transactionIncome.getCreatedAt(),
-                            transactionIncome.getUpdatedAt(),
-                            transactionIncome.getUserId()))
+                    .map(transactionIncomeMapper::toResponseDTO)
                     .toList();
 
             //If no fields were found. throw a Response Entity of Not Found 404
