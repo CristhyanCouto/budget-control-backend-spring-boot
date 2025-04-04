@@ -1,6 +1,7 @@
 package com.budget.control.backend.controller;
 
 import com.budget.control.backend.controller.dto.error.ErrorResponse;
+import com.budget.control.backend.controller.dto.request.LoginRequestDTO;
 import com.budget.control.backend.controller.dto.request.UserRequestDTO;
 import com.budget.control.backend.controller.dto.response.UserResponseDTO;
 import com.budget.control.backend.exception.*;
@@ -11,6 +12,7 @@ import com.budget.control.backend.type.UserRoleType;
 import com.budget.control.backend.validator.UUIDValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -154,4 +156,17 @@ public class UserController {
             return ResponseEntity.status(errorDTO.status()).body(errorDTO);
         }
     }
+
+    @PostMapping("/auth")
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+        Optional<UserModel> user = userService.authenticateUser(loginRequestDTO.email(), loginRequestDTO.password());
+
+        if (user.isPresent()) {
+            return ResponseEntity.ok("Login successful");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Username or password is incorrect");
+        }
+    }
+
+
 }

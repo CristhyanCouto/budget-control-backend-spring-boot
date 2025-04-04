@@ -10,4 +10,6 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<UserModel, UUID>, JpaSpecificationExecutor<UserModel> {
 
     Optional<UserModel> findByFirstNameAndLastNameAndCpfAndEmail(String firstName, String lastName, String cpf, String email);
+
+    Optional<UserModel> findByEmail(String email);
 }

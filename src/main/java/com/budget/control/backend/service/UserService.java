@@ -7,6 +7,7 @@ import com.budget.control.backend.validator.UUIDValidator;
 import com.budget.control.backend.validator.request.UserValidatorRequest;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -22,21 +23,28 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserValidatorRequest userValidatorRequest;
     private final UUIDValidator uuidValidator;
+    private final PasswordEncoder passwordEncoder;
 
     //Constructor Injection
     public UserService(
             UserRepository userRepository,
             UserValidatorRequest userValidatorRequest,
-            UUIDValidator uuidValidator
+            UUIDValidator uuidValidator,
+            PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.userValidatorRequest = userValidatorRequest;
         this.uuidValidator = uuidValidator;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // Save user
     public void saveUser(UserModel userModel) {
         userValidatorRequest.validate(userModel);
+
+        // Encrypt password
+        String hashedPassword = passwordEncoder.encode(userModel.getEncryptedPassword());
+        userModel.setEncryptedPassword(hashedPassword);
         userRepository.save(userModel);
     }
 
@@ -98,4 +106,24 @@ public class UserService {
         }
         userRepository.delete(userModel);
     }
+
+    // Validate password
+    public boolean validatePassword(String rawPassword, String encryptedPassword) {
+        return passwordEncoder.matches(rawPassword, encryptedPassword);
+    }
+
+    public Optional<UserModel> authenticateUser(String email, String rawPassword) {
+        Optional<UserModel> userOptional = userRepository.findByEmail(email);
+
+        if (userOptional.isPresent()) {
+            UserModel user = userOptional.get();
+
+            if (validatePassword(rawPassword, user.getEncryptedPassword())) {
+                return Optional.of(user); // Wrong password
+            }
+        }
+        return Optional.empty(); // Wrong password or user not found
+    }
+
+
 }
