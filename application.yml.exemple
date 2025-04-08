@@ -1,0 +1,25 @@
+spring:
+  application:
+    # Aplication Name
+    name:
+  datasource:
+    # URL database - case postgresql jdbc:postgresql://<host>:<port>/<database>
+    url:
+    # Database user
+    username:
+    # Database password
+    password:
+    # Database driver, case postgresql org.postgresql.Driver
+    driver-class-name:
+  # JPA Configuration
+  jpa:
+    hibernate:
+      # Naming strategy to auto update use - update
+      ddl-auto:
+    show-sql: true
+    properties:
+      hibernate.format_sql: true
+      hibernate.use_sql_comments: true
+  frontend:
+    # Frontend URL - This case, Vite
+    url: http://localhost:5173
