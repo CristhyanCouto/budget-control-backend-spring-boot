@@ -1,8 +1,9 @@
 package com.budget.control.backend.controller;
 
 import com.budget.control.backend.controller.dto.error.ErrorResponse;
-import com.budget.control.backend.controller.dto.request.LoginRequestDTO;
+import com.budget.control.backend.controller.dto.request.AuthRequestDTO;
 import com.budget.control.backend.controller.dto.request.UserRequestDTO;
+import com.budget.control.backend.controller.dto.response.AuthResponseDTO;
 import com.budget.control.backend.controller.dto.response.UserResponseDTO;
 import com.budget.control.backend.exception.*;
 import com.budget.control.backend.mappers.UserMapper;
@@ -158,8 +159,8 @@ public class UserController {
     }
 
     @PostMapping("/auth")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequestDTO) {
-        Optional<UserModel> user = userService.authenticateUser(loginRequestDTO.email(), loginRequestDTO.password());
+    public ResponseEntity<?> login(@RequestBody AuthRequestDTO authRequestDTO) {
+        Optional<UserModel> user = userService.authenticateUser(authRequestDTO.email(), authRequestDTO.password());
 
         if (user.isPresent()) {
             return ResponseEntity.ok("Login successful");
