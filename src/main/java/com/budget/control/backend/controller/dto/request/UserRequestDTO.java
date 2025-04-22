@@ -7,6 +7,7 @@ import org.hibernate.validator.constraints.br.CPF;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record UserRequestDTO(
         @NotNull(message = "Required field.")
@@ -29,6 +30,7 @@ public record UserRequestDTO(
         UserRoleType role,
         String confirmationToken,
         String recoveryToken,
-        LocalDateTime recoveryTokenExpiration
+        LocalDateTime recoveryTokenExpiration,
+        UUID groupId
 ) {
 }

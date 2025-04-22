@@ -24,6 +24,7 @@ public class SecurityConfig {
                                 .requestMatchers("/transaction-benefit/**").permitAll()
                                 .requestMatchers("/user/**").permitAll()
                                 .requestMatchers("/auth/**").permitAll()
+                                .requestMatchers("/groups/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .csrf(csrf -> csrf.disable()); // Disable CSRF for testing purposes

@@ -80,7 +80,7 @@ public class UserModel {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    @LastModifiedDate
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    @ManyToOne
+    @JoinColumn(name = "group_id")
+    private GroupModel group;
 }
