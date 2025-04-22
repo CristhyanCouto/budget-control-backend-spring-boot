@@ -1,10 +1,12 @@
 package com.budget.control.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -30,6 +32,10 @@ public class GroupModel {
 
     @Column(name = "reference_id")
     private UUID referenceId;
+
+    @OneToMany(mappedBy = "groupId", fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<UserModel> users;
 
     @PrePersist
     public void generateReferenceId() {

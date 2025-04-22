@@ -15,7 +15,7 @@ public abstract class UserMapper {
     GroupRepository groupRepository;
 
     @Mapping(source = "encryptedPassword", target = "encryptedPassword")
-    @Mapping(target = "group", expression = "java(groupRepository.findById(userRequestDTO.groupId()).orElse(null))")
+    @Mapping(target = "groupId", expression = "java(groupRepository.findById(userRequestDTO.groupId()).orElse(null))")
     public abstract  UserModel toRequestEntity(UserRequestDTO userRequestDTO);
 
     public abstract UserResponseDTO toResponseDTO(UserModel userModel);

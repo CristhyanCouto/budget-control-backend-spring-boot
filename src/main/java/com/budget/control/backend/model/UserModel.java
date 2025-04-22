@@ -1,6 +1,8 @@
 package com.budget.control.backend.model;
 
 import com.budget.control.backend.type.UserRoleType;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
@@ -82,5 +84,6 @@ public class UserModel {
 
     @ManyToOne
     @JoinColumn(name = "group_id")
-    private GroupModel group;
+    @JsonBackReference
+    private GroupModel groupId;
 }

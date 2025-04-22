@@ -1,5 +1,6 @@
 package com.budget.control.backend.controller.dto.response;
 
+import com.budget.control.backend.model.GroupModel;
 import com.budget.control.backend.model.UserModel;
 import com.budget.control.backend.type.UserRoleType;
 
@@ -26,7 +27,8 @@ public record UserResponseDTO(
         LocalDateTime invitedAt,
         LocalDateTime confirmedAt,
         LocalDateTime lastLoginAt,
-        LocalDateTime deletedAt
+        LocalDateTime deletedAt,
+        GroupModel groupId
 ) {
 
 }
